@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'create_classroom.dart';
+import 'classroom_details_page.dart'; // Import the new page
 import '../objects/user.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key, required this.user});
   final User user;
+
   @override
   State<TeacherDashboard> createState() => _TeacherDashboardState();
 }
@@ -23,131 +25,185 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   Future<void> fetchClassrooms() async {
     try {
-      final url = Uri.parse(
-        "http://abohmed.atwebpages.com/get_classrooms.php",
-      );
+      final url = Uri.parse("http://abohmed.atwebpages.com/get_classrooms.php");
 
       final res = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "teacher_id": widget.user.id,
-        }),
+        body: jsonEncode({"teacher_id": widget.user.id}),
       );
 
       debugPrint("STATUS: ${res.statusCode}");
-      debugPrint("BODY: ${res.body}");
+      // Don't log full body if it's huge, but fine for debugging now
+      // debugPrint("BODY: ${res.body}");
 
-      if (res.statusCode != 200) {
-        throw Exception("Server error");
+      if (res.statusCode != 200) throw Exception("Server error ${res.statusCode}");
+
+      // Clean JSON (for free hosting junk)
+      String cleanJson = res.body;
+      int first = res.body.indexOf('[');
+      int last = res.body.lastIndexOf(']');
+      if (first != -1 && last != -1) {
+        cleanJson = res.body.substring(first, last + 1);
+      } else {
+        // Sometimes it returns { "error": ... } object instead of List
+        first = res.body.indexOf('{');
+        last = res.body.lastIndexOf('}');
+        if(first != -1 && last != -1) cleanJson = res.body.substring(first, last + 1);
       }
 
-      final decoded = jsonDecode(res.body);
+      final decoded = jsonDecode(cleanJson);
 
       if (decoded is List) {
         setState(() {
           classrooms = decoded;
           isLoading = false;
         });
-      } else {
-        // ❗ Important: stop loader even if response is wrong
-        setState(() => isLoading = false);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(decoded["error"] ?? "Invalid data format"),
-          ),
-        );
+      } else if (decoded is Map) {
+        // Handle error response { "error": "No classrooms" }
+        setState(() {
+          classrooms = [];
+          isLoading = false;
+        });
+        // Optional: Show snackbar only if it's an actual error, not just empty list
+        if (decoded['error'] != null && decoded['error'] != "No classrooms found") {
+          _showMsg(decoded['error']);
+        }
       }
     } catch (e) {
-      // ❗ ALWAYS stop loader
+      debugPrint("Error fetching: $e");
       setState(() => isLoading = false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      _showMsg("Could not load classes");
     }
   }
 
+  void _showMsg(String msg) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
+  }
+
+  // Navigate to details
+  void _openClassroom(Map<String, dynamic> classroomData) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClassroomDetailsPage(classroom: classroomData),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      backgroundColor: const Color(0xFFf6f8f6), // Matches details page bg
       appBar: AppBar(
-        title:  Text("welcome ${widget.user.name} "),
-        backgroundColor: const Color(0xFF16A34A),
+        title: Text("Welcome, ${widget.user.name}"),
+        backgroundColor: const Color(0xFF16A34A), // Green-600
+        elevation: 0,
       ),
-
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
           : classrooms.isEmpty
-          ? const Center(child: Text("No classrooms found"))
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.class_outlined, size: 60, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            const Text("No classrooms yet", style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      )
           : ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: classrooms.length,
         itemBuilder: (context, index) {
           final c = classrooms[index];
 
+          // Card
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 6),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Classroom ${c["name"]}",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _openClassroom(c), // CLICKABLE HERE
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            c["name"] ?? "Class",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0f172a),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF16A34A).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.schedule, size: 16, color: Color(0xFF16A34A)),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${c["start_time"]} - ${c["finish_time"]}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF16A34A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    const Icon(Icons.schedule, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      "${c["start_time"]} - ${c["finish_time"]}",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      // TODO: open classroom details
-                    },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text("Enter Class"),
-                  ),
-                )
-              ],
+              ),
             ),
           );
         },
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF16A34A),
-        onPressed: () {
+        onPressed: () async {
+          // Wait for result from Create Page
+          final bool? result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => CreateClassroomPage(user: widget.user),
+            ),
+          );
 
-
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  CreateClassroomPage(user: widget.user,),));
-
+          // If created successfully, refresh list
+          if (result == true) {
+            fetchClassrooms();
+          }
         },
         child: const Icon(Icons.add),
       ),

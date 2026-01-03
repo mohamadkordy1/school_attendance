@@ -18,6 +18,31 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
 
   bool isLoading = false;
 
+  // --- NEW: Helper to pick time safely ---
+  Future<void> _pickTime(TextEditingController controller) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          // Force 24h format to match what databases usually like (optional)
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      // Format the time as HH:MM so it is clean for the DB
+      final String formatted =
+          "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+      setState(() {
+        controller.text = formatted;
+      });
+    }
+  }
+  // ---------------------------------------
+
   Future<void> saveClassroom() async {
     if (nameCtrl.text.isEmpty ||
         startCtrl.text.isEmpty ||
@@ -31,8 +56,9 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
     setState(() => isLoading = true);
 
     try {
+      // Added 'https:' to ensure mobile treats it correctly
       final res = await http.post(
-        Uri.parse("http://abohmed.atwebpages.com/create_classroom.php"),
+        Uri.parse("//abohmed.atwebpages.com/store_classroom.php"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "teacher_id": widget.user.id,
@@ -42,82 +68,161 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
         }),
       );
 
-      // ✅ ALWAYS LOG SERVER RESPONSE
       debugPrint("STATUS CODE: ${res.statusCode}");
       debugPrint("RAW RESPONSE: ${res.body}");
 
       setState(() => isLoading = false);
 
       try {
-        final data = jsonDecode(res.body);
+        // Safe JSON extraction (in case free hosting adds ads)
+        String cleanJson = res.body;
+        int firstBrace = res.body.indexOf('{');
+        int lastBrace = res.body.lastIndexOf('}');
+        if (firstBrace != -1 && lastBrace != -1) {
+          cleanJson = res.body.substring(firstBrace, lastBrace + 1);
+        }
 
+        final data = jsonDecode(cleanJson);
         debugPrint("DECODED JSON: $data");
 
         if (res.statusCode == 200 && data["success"] == true) {
-          Navigator.pop(context, true);
+          if (mounted) {
+            Navigator.pop(context, true);
+          }
         } else {
           debugPrint("BACKEND ERROR: ${data["error"]}");
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data["error"] ?? "Unknown error")),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(data["error"] ?? "Unknown error")),
+            );
+          }
         }
       } catch (e) {
-        // ❌ JSON parsing error (HTML response, PHP error, etc.)
         debugPrint("JSON PARSE ERROR: $e");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Invalid server response")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Invalid server response")),
+          );
+        }
       }
     } catch (e) {
-      // ❌ Network / request error
       debugPrint("REQUEST ERROR: $e");
-
       setState(() => isLoading = false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Network error")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Network error")),
+        );
+      }
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    // Define a consistent border style for inputs
+    final outlineBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    );
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("New Classroom"),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        title: const Text("New Classroom", style: TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              "Class Details",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 20),
+
+            // Name Input
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: "Class Name"),
+              decoration: InputDecoration(
+                labelText: "Class Name",
+                hintText: "e.g. Mathematics 101",
+                prefixIcon: const Icon(Icons.class_outlined),
+                border: outlineBorder,
+                enabledBorder: outlineBorder,
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
             ),
+            const SizedBox(height: 20),
+
+            // Start Time Input (Read Only + Picker)
             TextField(
               controller: startCtrl,
-              decoration: const InputDecoration(labelText: "Start Time (09:00)"),
+              readOnly: true, // User cannot type manually
+              onTap: () => _pickTime(startCtrl),
+              decoration: InputDecoration(
+                labelText: "Start Time",
+                hintText: "09:00",
+                prefixIcon: const Icon(Icons.access_time),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+                border: outlineBorder,
+                enabledBorder: outlineBorder,
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
             ),
+            const SizedBox(height: 20),
+
+            // Finish Time Input (Read Only + Picker)
             TextField(
               controller: finishCtrl,
-              decoration: const InputDecoration(labelText: "Finish Time (10:30)"),
+              readOnly: true,
+              onTap: () => _pickTime(finishCtrl),
+              decoration: InputDecoration(
+                labelText: "Finish Time",
+                hintText: "10:30",
+                prefixIcon: const Icon(Icons.access_time_filled),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+                border: outlineBorder,
+                enabledBorder: outlineBorder,
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 40),
+
+            // Action Button
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 56,
               child: ElevatedButton(
                 onPressed: isLoading ? null : saveClassroom,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
                 child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Create Classroom"),
+                    ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                )
+                    : const Text(
+                  "Create Classroom",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             )
           ],
