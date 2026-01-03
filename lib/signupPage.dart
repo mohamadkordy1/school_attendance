@@ -137,7 +137,7 @@ final TextEditingController passwordcont =TextEditingController();
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
             children: [
-              /// Header
+
               SafeArea(
                 bottom: false,
                 child: Padding(
@@ -152,7 +152,6 @@ final TextEditingController passwordcont =TextEditingController();
                 ),
               ),
 
-              /// Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -171,7 +170,7 @@ final TextEditingController passwordcont =TextEditingController();
 
                       const SizedBox(height: 32),
 
-                      /// Full Name
+
                       Text("Full Name", style: labelStyle),
                       const SizedBox(height: 8),
                       TextField(
@@ -184,7 +183,7 @@ final TextEditingController passwordcont =TextEditingController();
 
                       const SizedBox(height: 20),
 
-                      /// Email
+
                       Text("Email ", style: labelStyle),
                       const SizedBox(height: 8),
                       TextField(
@@ -197,7 +196,7 @@ final TextEditingController passwordcont =TextEditingController();
 
                       const SizedBox(height: 20),
 
-                      /// Phone
+
                       Text("Phone Number", style: labelStyle),
                       const SizedBox(height: 8),
                       TextField(
@@ -210,7 +209,7 @@ final TextEditingController passwordcont =TextEditingController();
 
                       const SizedBox(height: 20),
 
-                      /// Password
+
                       Text("Password", style: labelStyle),
                       const SizedBox(height: 8),
                       TextField(
@@ -241,7 +240,7 @@ final TextEditingController passwordcont =TextEditingController();
 
                       const SizedBox(height: 32),
 
-                      /// Sign Up
+
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -265,26 +264,7 @@ final TextEditingController passwordcont =TextEditingController();
                         ),
                       ),
 
-                      const SizedBox(height: 32),
 
-                      /// Login
-                      Center(
-                        child: Text.rich(
-                          TextSpan(
-                            text: "Already a member? ",
-                            style: const TextStyle(fontSize: 16),
-                            children: const [
-                              TextSpan(
-                                text: "Log in",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
 
                       const SizedBox(height: 24),
                     ],

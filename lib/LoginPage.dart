@@ -5,6 +5,7 @@ import 'signupPage.dart';
 import 'teacher/TeacherDashBoard.dart';
 import 'Student/StudentHome.dart';
 import 'objects/user.dart';
+import 'admin/adminpage.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -64,13 +65,13 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  StudentHome( user: user,),));
 
-
-
-
-
     } else if (user.role == "teacher") {
 
         Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  TeacherDashboard(user: user,),));
+
+    }else if (user.role == "admin") {
+
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  adminPage(user: user,),));
 
     }
 

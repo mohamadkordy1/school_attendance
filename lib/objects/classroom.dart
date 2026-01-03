@@ -1,18 +1,25 @@
-class Classroom{
-  int id;
-  int teacher_id;
+class Classroom {
+  final int id;
+  final String name;
+  final String startTime;
+  final String finishTime;
+  final String teacherName;
 
-  String start_time;
-  String name;
-  String finish_time;
+  Classroom({
+    required this.id,
+    required this.name,
+    required this.startTime,
+    required this.finishTime,
+    required this.teacherName
+  });
 
-  Classroom(this.id, this.teacher_id, this.start_time, this.name,
-      this.finish_time);
-
-  @override
-  String toString() {
-    return 'classroom{id: $id, teacher_id: $teacher_id, start_time: $start_time, name: $name, finish_time: $finish_time}';
+  factory Classroom.fromJson(Map<String, dynamic> json) {
+    return Classroom(
+      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
+      name: json['name'],
+      startTime: json['start_time'],
+      finishTime: json['finish_time'],
+      teacherName: json['teacher_name'],
+    );
   }
-
-
 }
