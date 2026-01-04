@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // Only required if fetching class data here
-import 'daily_attendance_page.dart'; // We will create this next
+import 'package:http/http.dart' as http;
+import 'daily_attendance_page.dart';
 
-// Using a simple Map as a placeholder for your Classroom model
-// Replace this with your actual Classroom model if necessary
 class Classroom {
   final int id;
   final String name;
@@ -11,7 +9,7 @@ class Classroom {
 }
 
 class AttendanceDatePage extends StatefulWidget {
-  // Assuming the classroom object passed from the dashboard has an 'id'
+
   final Map<String, dynamic> classroom;
 
   const AttendanceDatePage({super.key, required this.classroom});
@@ -21,7 +19,7 @@ class AttendanceDatePage extends StatefulWidget {
 }
 
 class _AttendanceDatePageState extends State<AttendanceDatePage> {
-  // Theme Colors
+
   static const Color primaryGreen = Color(0xFF19e619);
   static const Color backgroundLight = Color(0xFFf6f8f6);
   static const Color textDark = Color(0xFF0f172a);
@@ -45,7 +43,7 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // SCROLLABLE CALENDAR
+
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -60,7 +58,7 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
                   ),
                   child: Column(
                     children: [
-                      // MONTH + YEAR NAV
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -87,7 +85,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
 
                       const SizedBox(height: 16),
 
-                      // WEEKDAYS
                       GridView.count(
                         crossAxisCount: 7,
                         shrinkWrap: true,
@@ -100,7 +97,7 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
 
                       const SizedBox(height: 8),
 
-                      // DAYS GRID
+
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -112,7 +109,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
                         ),
                         itemBuilder: (context, index) {
                           final firstDay = DateTime(displayedMonth.year, displayedMonth.month, 1);
-                          // Adjusting for Dart's Monday=1, Sunday=7 to Sunday=0
                           final startWeekday = firstDay.weekday % 7;
                           final day = index - startWeekday + 1;
                           final daysInMonth = DateUtils.getDaysInMonth(displayedMonth.year, displayedMonth.month);
@@ -128,7 +124,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
                               selectedDate!.month == date.month &&
                               selectedDate!.day == date.day;
 
-                          // Prevent selecting future dates
                           final isFuture = date.isAfter(DateTime.now().subtract(const Duration(hours: 24)));
 
                           return _DayCell(
@@ -146,7 +141,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
 
                       const SizedBox(height: 12),
 
-                      // SELECTED DATE DISPLAY
                       if (selectedDate != null)
                         Text(
                           _formatFullDate(selectedDate!),
@@ -162,7 +156,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
               ),
             ),
 
-            // CONTINUE BUTTON
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -171,7 +164,6 @@ class _AttendanceDatePageState extends State<AttendanceDatePage> {
                   onPressed: selectedDate == null
                       ? null
                       : () {
-                    // Navigate to the daily attendance page
                     Navigator.push(context, MaterialPageRoute(
                       builder: (context) => DailyAttendancePage(
                         classroom: widget.classroom,

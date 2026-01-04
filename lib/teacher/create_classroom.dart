@@ -18,14 +18,12 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
 
   bool isLoading = false;
 
-  // --- NEW: Helper to pick time safely ---
   Future<void> _pickTime(TextEditingController controller) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (context, child) {
         return MediaQuery(
-          // Force 24h format to match what databases usually like (optional)
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
           child: child!,
         );
@@ -33,7 +31,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
     );
 
     if (picked != null) {
-      // Format the time as HH:MM so it is clean for the DB
+
       final String formatted =
           "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
       setState(() {
@@ -41,7 +39,6 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
       });
     }
   }
-  // ---------------------------------------
 
   Future<void> saveClassroom() async {
     if (nameCtrl.text.isEmpty ||
@@ -56,7 +53,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
     setState(() => isLoading = true);
 
     try {
-      // Added 'https:' to ensure mobile treats it correctly
+
       final res = await http.post(
         Uri.parse("//abohmed.atwebpages.com/store_classroom.php"),
         headers: {"Content-Type": "application/json"},
@@ -74,7 +71,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
       setState(() => isLoading = false);
 
       try {
-        // Safe JSON extraction (in case free hosting adds ads)
+
         String cleanJson = res.body;
         int firstBrace = res.body.indexOf('{');
         int lastBrace = res.body.lastIndexOf('}');
@@ -118,7 +115,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Define a consistent border style for inputs
+
     final outlineBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -147,7 +144,6 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
             ),
             const SizedBox(height: 20),
 
-            // Name Input
             TextField(
               controller: nameCtrl,
               decoration: InputDecoration(
@@ -162,10 +158,10 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
             ),
             const SizedBox(height: 20),
 
-            // Start Time Input (Read Only + Picker)
+
             TextField(
               controller: startCtrl,
-              readOnly: true, // User cannot type manually
+              readOnly: true,
               onTap: () => _pickTime(startCtrl),
               decoration: InputDecoration(
                 labelText: "Start Time",
@@ -180,7 +176,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
             ),
             const SizedBox(height: 20),
 
-            // Finish Time Input (Read Only + Picker)
+
             TextField(
               controller: finishCtrl,
               readOnly: true,
@@ -199,7 +195,7 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
 
             const SizedBox(height: 40),
 
-            // Action Button
+
             SizedBox(
               width: double.infinity,
               height: 56,

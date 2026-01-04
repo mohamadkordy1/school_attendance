@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'create_classroom.dart';
-import 'classroom_details_page.dart'; // Import the new page
+import 'classroom_details_page.dart';
 import '../objects/user.dart';
 
 class TeacherDashboard extends StatefulWidget {
@@ -34,19 +34,18 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       );
 
       debugPrint("STATUS: ${res.statusCode}");
-      // Don't log full body if it's huge, but fine for debugging now
-      // debugPrint("BODY: ${res.body}");
+
 
       if (res.statusCode != 200) throw Exception("Server error ${res.statusCode}");
 
-      // Clean JSON (for free hosting junk)
+
       String cleanJson = res.body;
       int first = res.body.indexOf('[');
       int last = res.body.lastIndexOf(']');
       if (first != -1 && last != -1) {
         cleanJson = res.body.substring(first, last + 1);
       } else {
-        // Sometimes it returns { "error": ... } object instead of List
+
         first = res.body.indexOf('{');
         last = res.body.lastIndexOf('}');
         if(first != -1 && last != -1) cleanJson = res.body.substring(first, last + 1);
@@ -60,12 +59,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           isLoading = false;
         });
       } else if (decoded is Map) {
-        // Handle error response { "error": "No classrooms" }
+
         setState(() {
           classrooms = [];
           isLoading = false;
         });
-        // Optional: Show snackbar only if it's an actual error, not just empty list
+
         if (decoded['error'] != null && decoded['error'] != "No classrooms found") {
           _showMsg(decoded['error']);
         }
@@ -83,7 +82,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     }
   }
 
-  // Navigate to details
+
   void _openClassroom(Map<String, dynamic> classroomData) {
     Navigator.push(
       context,
@@ -96,10 +95,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf6f8f6), // Matches details page bg
+      backgroundColor: const Color(0xFFf6f8f6),
       appBar: AppBar(
         title: Text("Welcome, ${widget.user.name}"),
-        backgroundColor: const Color(0xFF16A34A), // Green-600
+        backgroundColor: const Color(0xFF16A34A),
         elevation: 0,
       ),
       body: isLoading
@@ -121,7 +120,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         itemBuilder: (context, index) {
           final c = classrooms[index];
 
-          // Card
+
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
@@ -139,7 +138,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => _openClassroom(c), // CLICKABLE HERE
+                onTap: () => _openClassroom(c),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -193,14 +192,14 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF16A34A),
         onPressed: () async {
-          // Wait for result from Create Page
+
           final bool? result = await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => CreateClassroomPage(user: widget.user),
             ),
           );
 
-          // If created successfully, refresh list
+
           if (result == true) {
             fetchClassrooms();
           }

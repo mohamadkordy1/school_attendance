@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 
 class DailyAttendancePage extends StatefulWidget {
   final DateTime selectedDate;
-  // Assuming the classroom object passed has an 'id' and 'name'
+
   final Map<String, dynamic> classroom;
 
   const DailyAttendancePage({
@@ -19,37 +19,35 @@ class DailyAttendancePage extends StatefulWidget {
 }
 
 class _DailyAttendancePageState extends State<DailyAttendancePage> {
-  // Theme Colors
+
   static const Color primaryGreen = Color(0xFF19e619);
   static const Color backgroundLight = Color(0xFFf6f8f6);
   static const Color cardLight = Colors.white;
-  static const Color presentColor = Color(0xFF22C55E); // Green
-  static const Color absentColor = Color(0xFFEF4444); // Red
+  static const Color presentColor = Color(0xFF22C55E);
+  static const Color absentColor = Color(0xFFEF4444);
 
-  List students = []; // List of students to display
+  List students = [];
   bool isLoading = true;
   bool isSaving = false;
   bool alreadySaved = false;
 
-  /// studentId (String) -> 'Present' or 'Absent'
+
   Map<String, String> attendance = {};
 
 
   @override
   void initState() {
     super.initState();
-    // One function call to determine both the list and the status
+
     _loadData();
   }
 
-  // Unified function to either load saved attendance OR load the student list for marking
   Future<void> _loadData() async {
     setState(() => isLoading = true);
 
     final String classroomId = widget.classroom['id'].toString();
     final String sqlDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
 
-    // 1. Try to fetch existing attendance for this date
     try {
       final url = Uri.parse("http://abohmed.atwebpages.com/get_attendance.php");
 
@@ -62,7 +60,6 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
         }),
       );
 
-      // Clean JSON
       String rawBody = res.body.trim();
       int start = rawBody.indexOf('[');
       int end = rawBody.lastIndexOf(']');
@@ -71,17 +68,15 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
       final List data = jsonDecode(cleanJson);
 
       if (data.isNotEmpty) {
-        // 2. SUCCESS: Attendance already exists for this date!
         students = data;
         for (var record in data) {
           attendance[record['id'].toString()] = record['status'];
         }
-        alreadySaved = true; // Lock the UI
+        alreadySaved = true;
       } else {
-        // 3. FAIL: Attendance does NOT exist. Load the student list for a fresh marking.
         await _fetchClassroomStudents();
-        alreadySaved = false; // Allow saving
-        // Initialize all to Present for fresh marking
+        alreadySaved = false;
+
         for (var student in students) {
           attendance[student['id'].toString()] = 'Present';
         }
@@ -100,7 +95,6 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
   }
 
 
-  // Fetches students enrolled in this classroom (Called only if attendance does not exist)
   Future<void> _fetchClassroomStudents() async {
     try {
       final url = Uri.parse("http://abohmed.atwebpages.com/get_classroom_students.php");
@@ -111,7 +105,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
         body: jsonEncode({"classroom_id": widget.classroom['id']}),
       );
 
-      // Clean JSON
+
       String rawBody = res.body.trim();
       int start = rawBody.indexOf('[');
       int end = rawBody.lastIndexOf(']');
@@ -128,27 +122,25 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
   }
 
 
-  // Saves the attendance data to the database
   Future<void> _saveAttendance() async {
-    // We remove the check `if (alreadySaved)` here because the PHP server
-    // will now handle the duplicate check and return a nice error message if needed.
+
     if (isSaving || students.isEmpty) return;
 
     setState(() => isSaving = true);
 
-    // Prepare data array for PHP script
+
     List<Map<String, String>> dataToSend = students.map((s) {
       final studentId = s['id'].toString();
       return {
         "classroom_id": widget.classroom['id'].toString(),
         "student_id": studentId,
-        "date": DateFormat('yyyy-MM-dd').format(widget.selectedDate), // YYYY-MM-DD format for SQL
-        "status": attendance[studentId] ?? 'Present', // Default to Present
+        "date": DateFormat('yyyy-MM-dd').format(widget.selectedDate),
+        "status": attendance[studentId] ?? 'Present',
       };
     }).toList();
     debugPrint("Saving Attendance for Classroom ID: ${widget.classroom['id']}");
     debugPrint("Date: ${DateFormat('yyyy-MM-dd').format(widget.selectedDate)}");
-    debugPrint("JSON Body Sent: ${jsonEncode({"attendance_data": dataToSend})}"); // Print the actual JSON string
+    debugPrint("JSON Body Sent: ${jsonEncode({"attendance_data": dataToSend})}");
     try {
       final url = Uri.parse("http://abohmed.atwebpages.com/save_attendance.php");
 
@@ -158,7 +150,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
         body: jsonEncode({"attendance_data": dataToSend}),
       );
 
-      // Clean JSON
+
       String rawBody = res.body.trim();
       int start = rawBody.indexOf('{');
       int end = rawBody.lastIndexOf('}');
@@ -171,7 +163,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(data["message"] ?? "Attendance saved!")),
           );
-          // Only set alreadySaved = true on successful insertion
+
           setState(() {
             alreadySaved = true;
           });
@@ -198,7 +190,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (rest of the build method is unchanged)
+
     return Scaffold(
       backgroundColor: backgroundLight,
       appBar: AppBar(
@@ -211,7 +203,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
       ),
       body: Column(
         children: [
-          // DATE DISPLAY
+
           Padding(
             padding: const EdgeInsets.all(12),
             child: Text(
@@ -224,7 +216,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
             ),
           ),
 
-          // CHILDREN LIST
+
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -242,7 +234,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
                   name: student['name'] ?? 'N/A',
                   studentId: studentId,
                   isPresent: isPresent,
-                  isLocked: alreadySaved, // Set locking based on the fetch result
+                  isLocked: alreadySaved,
                   onMark: (status) {
                     if (!alreadySaved) {
                       setState(() {
@@ -255,7 +247,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
             ),
           ),
 
-          // SAVE BUTTON
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -274,7 +266,7 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
                 child: isSaving
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Text(
-                  // Display status based on fetch result
+
                   alreadySaved ? "Attendance Saved (View Only)" : "Save Attendance",
                   style: const TextStyle(
                     fontSize: 18,
@@ -290,13 +282,13 @@ class _DailyAttendancePageState extends State<DailyAttendancePage> {
   }
 }
 
-// Re-using the existing AttendanceCard and StatusButton widgets (unchanged)
+
 class _AttendanceCard extends StatelessWidget {
   final String name;
   final String studentId;
   final bool isPresent;
   final bool isLocked;
-  final Function(String status) onMark; // status is 'Present' or 'Absent'
+  final Function(String status) onMark;
 
   const _AttendanceCard({
     required this.name,
@@ -369,13 +361,13 @@ class _AttendanceCard extends StatelessWidget {
                 child: Text(
                   name,
                   style: const TextStyle(
-                    color: Color(0xFF0f172a), // textDark
+                    color: Color(0xFF0f172a),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
               ),
-              // Status indicator when locked
+
               if (isLocked)
                 Icon(
                   isPresent ? Icons.check_circle : Icons.cancel,
@@ -384,7 +376,7 @@ class _AttendanceCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Buttons Row
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -429,7 +421,6 @@ class _StatusButton extends StatelessWidget {
   Widget build(BuildContext context) {
     Color buttonColor = selected ? color : Colors.grey.shade300;
 
-    // Dim the button if locked, regardless of selection
     if (isLocked) {
       buttonColor = selected ? color.withOpacity(0.5) : Colors.grey.shade300.withOpacity(0.5);
     }
@@ -458,5 +449,3 @@ class _StatusButton extends StatelessWidget {
     );
   }
 }
-
-// Note: You must ensure these utility classes are present in your file.

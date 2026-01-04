@@ -14,7 +14,7 @@ class ClassroomDetailsPage extends StatefulWidget {
 }
 
 class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
-  // We start with an empty list
+
   List students = [];
   bool isLoading = true;
 
@@ -24,7 +24,6 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
     fetchStudents();
   }
 
-  // inside _ClassroomDetailsPageState in classroom_details_page.dart
   Future<void> deleteStudent(int studentId) async {
     final url = Uri.parse(
       "//abohmed.atwebpages.com/delete_student_from_classroom.php",
@@ -52,7 +51,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Student removed")),
         );
-        fetchStudents(); // refresh list
+        fetchStudents();
       } else {
         debugPrint("SERVER ERROR: ${data["message"]}");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,18 +78,13 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
         }),
       );
 
-      // Log the raw body for debugging (check your console!)
-      debugPrint("Raw Response Body from PHP: ${res.body}");
-
-      // --- REINFORCED JSON CLEANING ---
       String rawBody = res.body.trim();
 
-      // Find the starting and ending index of the JSON array [...]
       int startIndex = rawBody.indexOf('[');
       int endIndex = rawBody.lastIndexOf(']');
 
       if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-        // Extract only the clean JSON array part
+
         String cleanJson = rawBody.substring(startIndex, endIndex + 1);
 
         try {
@@ -102,24 +96,24 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
           });
           debugPrint("Successfully parsed ${students.length} students.");
         } catch (e) {
-          // Handle failure to decode the cleaned string
+
           setState(() => isLoading = false);
           debugPrint("JSON Decode Error on Cleaned String: $e");
         }
       } else {
-        // This means no valid JSON array was found in the body
+
         setState(() {
           students = [];
           isLoading = false;
         });
-        // Try to decode the whole body in case it's an error object
+
         try {
           final errorCheck = jsonDecode(rawBody.substring(rawBody.indexOf('{'), rawBody.lastIndexOf('}') + 1));
           if(errorCheck['error'] != null) {
             if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Server Error: ${errorCheck['error']}")));
           }
         } catch (_) {
-          // Ignore if it's not a JSON error object
+
         }
         debugPrint("No valid JSON array found in response body.");
       }
@@ -129,9 +123,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
     }
   }
 
-  // --- Helpers for Visuals ---
 
-  // Get Initials (e.g. "Ahmed Ali" -> "AA")
   String getInitials(String name) {
     if (name.isEmpty) return "?";
     List<String> parts = name.trim().split(" ");
@@ -141,7 +133,6 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
     return parts[0][0].toUpperCase();
   }
 
-  // Assign a consistent color based on the index
   Color getStudentColor(int index) {
     final colors = [
       Colors.blue.shade700,
@@ -163,7 +154,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
 
     return Scaffold( floatingActionButton: FloatingActionButton.extended(
       onPressed: () async {
-        // Pass the classroom ID as a String (assuming it's stored as an ID/PK)
+
         final String classroomId = widget.classroom['id'].toString();
 
         final bool? result = await Navigator.push(
@@ -173,9 +164,8 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
           ),
         );
 
-        // If the enrollment page returns 'true' (success), refresh the student list
         if (result == true) {
-          fetchStudents(); // The function to reload the student list
+          fetchStudents();
         }
       },
       label: const Text("Enroll Student"),
@@ -206,12 +196,12 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Navigate to the Attendance Date Selection Page
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => AttendanceDatePage(
-                        // Pass the entire classroom map/object
+
                         classroom: widget.classroom,
                       ),
                     ),
@@ -255,7 +245,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      // Start Time
+
                       Row(children: [
                         Icon(Icons.schedule, size: 20, color: primaryGreen),
                         const SizedBox(width: 6),
@@ -264,7 +254,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                       const SizedBox(width: 20),
                       Text("-", style: TextStyle(color: textGrey)),
                       const SizedBox(width: 20),
-                      // Finish Time
+
                       Row(children: [
                         Icon(Icons.timer_off_outlined, size: 20, color: textGrey),
                         const SizedBox(width: 6),
@@ -278,7 +268,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
 
             const SizedBox(height: 32),
 
-            // --- STUDENTS HEADER ---
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -301,7 +291,6 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
             ),
             const SizedBox(height: 16),
 
-            // --- REAL STUDENT LIST ---
             if (isLoading)
               const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
             else if (students.isEmpty)
@@ -325,7 +314,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                 separatorBuilder: (c, i) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final student = students[index];
-                  // Safe access to map keys
+
                   final name = student['name'] ?? "Unknown";
                   final id = student['id'].toString();
 
@@ -340,7 +329,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                     ),
                     child: Row(
                       children: [
-                        // Avatar
+
                         Container(
                           height: 48,
                           width: 48,
@@ -359,7 +348,7 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        // Info
+
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +369,6 @@ class _ClassroomDetailsPageState extends State<ClassroomDetailsPage> {
                           ),
                         ),
 
-// ✅ DELETE BUTTON ON THE RIGHT
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () {

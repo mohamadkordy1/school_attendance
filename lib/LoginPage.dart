@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// 🔐 LOGIN API
+
   Future<void> login() async {
     final url = Uri.parse(
       "http://abohmed.atwebpages.com/login_user.php",
@@ -141,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 16),
 
-                /// 👉 SIGN UP NAVIGATION ONLY
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -12,7 +12,7 @@ class EnrollStudentPage extends StatefulWidget {
 
 class _EnrollStudentPageState extends State<EnrollStudentPage> {
   List allStudents = [];
-  List filteredStudents = []; // 🔍 SEARCH RESULT LIST
+  List filteredStudents = [];
   Set<String> currentlyEnrolledIds = {};
   bool isLoading = true;
   bool isEnrolling = false;
@@ -34,7 +34,7 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
     super.dispose();
   }
 
-  // ================= FETCH DATA =================
+
 
   Future<void> _fetchData() async {
     setState(() => isLoading = true);
@@ -92,7 +92,7 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
     }
   }
 
-  // ================= SEARCH LOGIC =================
+
 
   void _onSearchChanged() {
     _applyFilter();
@@ -114,7 +114,7 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
     });
   }
 
-  // ================= ENROLL =================
+
 
   Future<void> _enrollStudent(String studentId, String studentName) async {
     if (isEnrolling) return;
@@ -155,7 +155,7 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
     }
   }
 
-  // ================= HELPERS =================
+
 
   String getInitials(String name) {
     if (name.isEmpty) return "?";
@@ -177,8 +177,6 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
     return colors[id.hashCode % colors.length];
   }
 
-  // ================= UI =================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,7 +189,7 @@ class _EnrollStudentPageState extends State<EnrollStudentPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
         children: [
-          // 🔍 SEARCH BAR
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(

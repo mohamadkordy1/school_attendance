@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../objects/user.dart';
 import '../objects/classroom.dart';
 import 'AttendancePage.dart';
-import '../LoginPage.dart'; // ✅ make sure this path is correct
+import '../LoginPage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class StudentHome extends StatefulWidget {
@@ -45,7 +45,6 @@ class _StudentHomeState extends State<StudentHome> {
     }
   }
 
-  /// 🔴 LOGOUT HANDLER
   void _logout() {
     showDialog(
       context: context,

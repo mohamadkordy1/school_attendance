@@ -20,7 +20,7 @@ class AttendancePage extends StatefulWidget {
 }
 
 class _AttendancePageState extends State<AttendancePage> {
-  /// date => status (Present / Absent)
+
   Map<String, String> attendanceMap = {};
 
   bool isLoading = true;
@@ -70,7 +70,7 @@ class _AttendancePageState extends State<AttendancePage> {
   String? getStatus(int day) {
     String formattedDate =
         "$selectedYear-${selectedMonth.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}";
-    return attendanceMap[formattedDate]; // null = no record
+    return attendanceMap[formattedDate];
   }
 
   double calculatePercentage(int totalDays) {
